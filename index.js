@@ -48,7 +48,7 @@ function getBrazilTime() {
     });
 }
 
-// ========== WEBHOOK EVOLUTION MODIFICADO ==========
+// ========== WEBHOOK EVOLUTION CORRIGIDO ==========
 app.post('/webhook/evolution', async (req, res) => {
     try {
         const data = req.body;
@@ -68,22 +68,25 @@ app.post('/webhook/evolution', async (req, res) => {
         
         addLog('evolution_webhook', `Mensagem: ${clientNumber} | FromMe: ${fromMe} | Instância: ${instanceName}`);
         
+        // Busca conversa existente ANTES de usar
+        const existingConversation = await conversationManager.checkExistingLead(clientNumber);
+        
         if (fromMe) {
             // MENSAGEM ENVIADA PELO SISTEMA - apenas log
             addLog('info', `📤 Sistema enviou mensagem para ${clientNumber} via ${instanceName}`);
             
-            // Busca conversa para salvar no histórico
-            const conversation = await conversationManager.getConversation(clientNumber);
-            if (conversation) {
-                await conversationManager.saveMessage(conversation.id, 'out', messageContent);
+            // Salva no histórico se existe conversa
+            if (existingConversation) {
+                try {
+                    await conversationManager.saveMessage(existingConversation.id, 'out', messageContent);
+                } catch (err) {
+                    addLog('warning', `Aviso ao salvar histórico: ${err.message}`);
+                }
             }
             
         } else {
             // MENSAGEM RECEBIDA DO CLIENTE
             addLog('info', `📥 Mensagem recebida de ${clientNumber}: "${messageContent.substring(0, 50)}..."`);
-            
-            // Verifica se lead já existe na base
-            const existingConversation = await conversationManager.checkExistingLead(clientNumber);
             
             if (!existingConversation) {
                 // LEAD NOVO - INICIA FLUXO
@@ -106,7 +109,11 @@ app.post('/webhook/evolution', async (req, res) => {
                 addLog('info', `✅ Nova conversa criada: ${clientNumber} → ${availableInstance.instance_name}`);
                 
                 // Salva primeira mensagem do lead
-                await conversationManager.saveMessage(newConversation.id, 'in', messageContent);
+                try {
+                    await conversationManager.saveMessage(newConversation.id, 'in', messageContent);
+                } catch (err) {
+                    addLog('warning', `Aviso ao salvar histórico: ${err.message}`);
+                }
                 
                 // INICIA FLUXO NO N8N
                 const eventData = {
@@ -144,7 +151,11 @@ app.post('/webhook/evolution', async (req, res) => {
                     );
                     
                     // Salva resposta do lead
-                    await conversationManager.saveMessage(existingConversation.id, 'in', messageContent);
+                    try {
+                        await conversationManager.saveMessage(existingConversation.id, 'in', messageContent);
+                    } catch (err) {
+                        addLog('warning', `Aviso ao salvar histórico: ${err.message}`);
+                    }
                     
                     // CONTINUA FLUXO NO N8N
                     const eventData = {
@@ -232,7 +243,11 @@ app.post('/webhook/checkpoint', async (req, res) => {
                     );
                     
                     if (sendResult.success) {
-                        await conversationManager.saveMessage(conversation.id, 'out', message_to_send);
+                        try {
+                            await conversationManager.saveMessage(conversation.id, 'out', message_to_send);
+                        } catch (err) {
+                            addLog('warning', `Aviso ao salvar histórico: ${err.message}`);
+                        }
                         addLog('info', `✅ Mensagem enviada e fluxo pausado para ${phone_number}`);
                     } else {
                         addLog('error', `❌ Erro ao enviar mensagem para ${phone_number}: ${sendResult.error}`);
@@ -253,7 +268,11 @@ app.post('/webhook/checkpoint', async (req, res) => {
                     );
                     
                     if (sendResult.success) {
-                        await conversationManager.saveMessage(conversation.id, 'out', message_to_send);
+                        try {
+                            await conversationManager.saveMessage(conversation.id, 'out', message_to_send);
+                        } catch (err) {
+                            addLog('warning', `Aviso ao salvar histórico: ${err.message}`);
+                        }
                     }
                 }
                 break;
@@ -271,7 +290,11 @@ app.post('/webhook/checkpoint', async (req, res) => {
                     );
                     
                     if (sendResult.success) {
-                        await conversationManager.saveMessage(conversation.id, 'out', message_to_send);
+                        try {
+                            await conversationManager.saveMessage(conversation.id, 'out', message_to_send);
+                        } catch (err) {
+                            addLog('warning', `Aviso ao salvar histórico: ${err.message}`);
+                        }
                     }
                 }
                 break;
@@ -420,7 +443,7 @@ cron.schedule('*/10 * * * *', async () => {
             addLog('cleanup', `🗑️ ${cleaned} conversas expiradas removidas`);
         }
     } catch (error) {
-        addLog('error', `❌ Erro na limpeza: ${error.message}`);
+        addLog('warning', `Aviso na limpeza: ${error.message}`);
     }
 });
 
