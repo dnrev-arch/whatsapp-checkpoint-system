@@ -95,20 +95,12 @@ CREATE TRIGGER update_conversations_updated_at
 
 -- Inserir instâncias padrão (baseado no seu código atual)
 INSERT INTO whatsapp_instances (instance_name, instance_id) VALUES
-('G01', '584F8ACCAA48-488D-A26E-E75E1A5B2994'),
-('G02', '2E2C41AB88F9-4356-B866-9ADA88530FD0'),
-('G03', '9AFECAC9683B-4611-8C51-933447B70905'),
-('G04', 'C974682BB258-4756-98F0-CF6D90FC2755'),
-('G05', '118E0162F12C-4841-ADD6-33E11DDB341A'),
-('G08', 'A63C380B277D-4A5E-9ECD-48710291E5A6'),
-('G10', 'D6932E02E658-40BD-9784-8932841CCFA4'),
-('G11', 'A1A28E54D712-41B9-A682-A49072EA2C0B'),
-('G12', '86A4086DE74E-490B-B116-FF6F8B740EB1');
+('G09', 'E667206D3C72-4F8B-AD10-F933F273A39B');
 
 -- Configuração de fluxo padrão
 INSERT INTO flow_configs (flow_name, n8n_webhook_url, instance_pool) VALUES
 ('fluxo_principal', 'https://n8n.flowzap.fun/webhook/checkpoint', 
- '["G01", "G02", "G03", "G04", "G05", "G08", "G10", "G11", "G12"]');
+ '["G09"]');
 
 -- Views úteis para monitoramento
 CREATE VIEW active_conversations_summary AS
